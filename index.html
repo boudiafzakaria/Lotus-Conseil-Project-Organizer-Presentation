@@ -1,0 +1,2816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lotus Conseil Project Organizer · Interactive Presentation</title>
+<style>
+  /* ——— DESIGN TOKENS (exactly from original) ——— */
+  :root {
+    --bg: #1d1d1d;
+    --well: #181818;
+    --light: #2b2b2b;
+    --dark: #0b0b0b;
+    --text: #d4d4d4;
+    --sub: #9a9a9a;
+    --dim: #666666;
+    --accent: #4096f3;
+    --ok: #5fc48a;
+    --warn: #e0b25a;
+    --err: #e8706f;
+
+    --raised:    7px 7px 14px var(--dark), -7px -7px 14px var(--light);
+    --raised-sm: 4px 4px 8px var(--dark),  -4px -4px 8px var(--light);
+    --raised-hv: 6px 6px 11px var(--dark), -6px -6px 11px var(--light);
+    --inset:     inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light);
+    --inset-sm:  inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 48px 24px 80px;
+    font-family: "Myriad Pro", "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ——— layout ——— */
+  .presentation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1100px;
+    width: 100%;
+    margin-bottom: 32px;
+    transition: max-width 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+  }
+
+  .presentation.wide-mode {
+    max-width: 100%;
+    justify-content: flex-start;
+    gap: 24px;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: width 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+  }
+
+  .col.wide-mode {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .label-tag {
+    font-size: 18px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  /* ——— PANEL (exactly like original) ——— */
+  .panel-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    transition: max-width 0.4s cubic-bezier(0.3, 0.7, 0.3, 1);
+  }
+
+  .panel-wrapper.wide-mode {
+    max-width: 100%;
+  }
+
+  .panel {
+    width: 100%;
+    background: var(--bg);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--raised);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    transition: padding 0.3s ease, gap 0.3s ease, flex-direction 0.4s ease;
+  }
+
+  .panel.wide-layout {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 24px;
+  }
+
+  .panel.wide-layout .header {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .panel.wide-layout .section {
+    display: none;
+  }
+
+  .panel.wide-layout .btn,
+  .panel.wide-layout .toggle-row {
+    width: auto;
+    flex: 1 1 200px;
+    max-width: 320px;
+  }
+
+  .panel.wide-layout .status {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .header { display: flex; align-items: center; gap: 10px; }
+  .title { flex: 1; line-height: 1.2; }
+  .title small {
+    display: block; font-size: 9px; letter-spacing: .16em;
+    text-transform: uppercase; font-weight: 700; color: var(--dim);
+  }
+  .title strong { font-size: 14px; font-weight: 700; color: var(--text); }
+  .chip {
+    font-size: 9.5px; font-weight: 600; color: var(--sub);
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--well);
+    box-shadow: var(--inset-sm);
+    white-space: nowrap;
+  }
+
+  .section {
+    font-size: 9px; letter-spacing: .16em; font-weight: 700;
+    text-transform: uppercase; color: var(--dim);
+    margin: 2px 4px -4px;
+  }
+
+  /* ——— Buttons ——— */
+  .btn {
+    height: 34px;
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 14px;
+    background: var(--bg);
+    border: none;
+    border-radius: 11px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--raised-sm);
+    transition: box-shadow .18s ease, transform .18s ease, color .18s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .btn svg {
+    width: 14px; height: 14px; flex: none;
+    stroke: currentColor; fill: none; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--raised-hv); }
+  .btn:active { transform: translateY(0); box-shadow: var(--inset); }
+  .btn:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+  .btn.primary { color: var(--accent); }
+  .btn.danger:hover { color: var(--err); }
+  .btn.center { justify-content: center; }
+
+  /* ——— Toggle (main panel + reused in test card) ——— */
+  .toggle-row {
+    height: 38px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+    border-radius: 11px;
+    box-shadow: var(--raised-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow .18s ease;
+    gap: 8px;
+  }
+  .toggle-row:hover { box-shadow: var(--raised-hv); }
+  .toggle-row .label { 
+    font-size: 11.5px; 
+    font-weight: 600; 
+    color: var(--sub); 
+    transition: color .2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .toggle-row.on .label { color: var(--text); }
+
+  .switch {
+    position: relative; width: 42px; height: 22px; border-radius: 20px;
+    background: var(--well);
+    box-shadow: var(--inset-sm);
+    flex: none;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg);
+    box-shadow: 2px 2px 5px var(--dark), -2px -2px 5px var(--light);
+    transition: transform .25s cubic-bezier(.3,.7,.3,1);
+  }
+  .switch::before {
+    content: ""; position: absolute; top: 8px; left: 8px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dim); z-index: 1;
+    transition: transform .25s cubic-bezier(.3,.7,.3,1), background .25s ease, box-shadow .25s ease;
+  }
+  .toggle-row.on .switch::after { transform: translateX(20px); }
+  .toggle-row.on .switch::before {
+    transform: translateX(20px);
+    background: var(--accent);
+    box-shadow: 0 0 7px rgba(64,150,243,.85);
+  }
+
+  /* ——— Status ——— */
+  .status {
+    height: 32px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: var(--well);
+    box-shadow: var(--inset);
+    font-size: 10.5px; font-weight: 600; color: var(--sub);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); position: relative; flex: none; color: var(--dim); }
+  .dot.ok { background: var(--ok); color: var(--ok); }
+  .dot.warn { background: var(--warn); color: var(--warn); }
+  .dot.err { background: var(--err); color: var(--err); }
+  .dot.pulse::after {
+    content: ""; position: absolute; inset: -3px; border-radius: 50%;
+    border: 1px solid currentColor; opacity: 0;
+    animation: ring .8s ease-out;
+  }
+  @keyframes ring { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+  .msg { animation: slide .3s ease; }
+  @keyframes slide { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
+
+  /* ——— About popup ——— */
+  .about {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: var(--raised);
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 100;
+    transform-origin: top center;
+    transition: transform .25s cubic-bezier(.3,.7,.3,1), opacity .25s ease, visibility .25s;
+  }
+  .about.hidden {
+    transform: scale(.9);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .about h2 { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .about p { font-size: 11.5px; color: var(--sub); line-height: 1.55; }
+  .about p b { color: var(--text); font-weight: 600; }
+  .about .desc-title { font-size: 11.5px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .about .note { font-size: 10.5px; color: var(--dim); }
+  .about .sep { height: 3px; border-radius: 3px; background: var(--well); box-shadow: var(--inset-sm); margin: 2px 0; }
+  .about .btn { margin-top: 6px; }
+
+  /* ——— Responsive Demo Controls ——— */
+  .responsive-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .resize-btn {
+    background: var(--well);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: var(--sub);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--inset-sm);
+    transition: color .2s, box-shadow .2s, background .2s;
+  }
+  .resize-btn:hover { color: var(--text); }
+  .resize-btn.active { color: var(--accent); box-shadow: var(--inset); }
+
+  /* ——— Manual Resize Handle ——— */
+  .resize-handle {
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 60px;
+    background: var(--well);
+    border-radius: 6px;
+    cursor: ew-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--raised-sm);
+    z-index: 10;
+    transition: box-shadow .2s, background .2s;
+  }
+  .resize-handle:hover {
+    background: var(--light);
+    box-shadow: var(--raised-hv);
+  }
+  .resize-handle:active {
+    cursor: grabbing;
+  }
+  .resize-handle::after {
+    content: "";
+    width: 2px;
+    height: 24px;
+    border-radius: 2px;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--dim) 0px,
+      var(--dim) 2px,
+      transparent 2px,
+      transparent 5px
+    );
+  }
+  .resize-handle .resize-tooltip {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--dark);
+    color: var(--text);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    box-shadow: var(--raised-sm);
+    font-family: "SF Mono", "Menlo", monospace;
+  }
+  .resize-handle:hover .resize-tooltip {
+    opacity: 1;
+  }
+
+  /* ——— interactive test blocks ——— */
+  .tests {
+    max-width: 860px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .test-card {
+    background: var(--bg);
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: var(--raised);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: box-shadow .2s ease;
+  }
+
+  .test-card .test-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+  }
+
+  .test-card .test-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--accent);
+    background: var(--well);
+    box-shadow: var(--inset-sm);
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex: none;
+  }
+
+  .test-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: .01em;
+    flex: 1;
+  }
+
+  .test-card p {
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--sub);
+    max-width: 640px;
+  }
+
+  .test-card p b { color: var(--text); font-weight: 600; }
+  .test-card .highlight { color: var(--accent); font-weight: 600; }
+
+  .test-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .btn-test {
+    height: 34px;
+    padding: 0 18px;
+    background: var(--bg);
+    border: none;
+    border-radius: 11px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: var(--raised-sm);
+    transition: box-shadow .18s ease, transform .18s ease, color .18s ease;
+  }
+  .btn-test:hover { transform: translateY(-1px); box-shadow: var(--raised-hv); }
+  .btn-test:active { transform: translateY(0); box-shadow: var(--inset); }
+  .btn-test:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+  .btn-test.accent { color: var(--accent); }
+  .btn-test.danger:hover { color: var(--err); }
+  .btn-test svg {
+    width: 14px; height: 14px; flex: none;
+    stroke: currentColor; fill: none; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* feedback console */
+  .feedback {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--dim);
+    background: var(--well);
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: var(--inset);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: "SF Mono", "Menlo", monospace;
+    line-height: 1.4;
+    transition: color .2s ease;
+  }
+  .feedback .fb-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dim);
+    flex: none;
+    transition: background .2s ease;
+  }
+  .feedback.active .fb-dot { background: var(--accent); box-shadow: 0 0 6px rgba(64,150,243,.7); }
+  .feedback.ok .fb-dot { background: var(--ok); }
+  .feedback.warn .fb-dot { background: var(--warn); }
+  .feedback.err .fb-dot { background: var(--err); }
+  .feedback .fb-text { animation: slide .25s ease; }
+  @keyframes slide { from { opacity: 0; transform: translateX(4px); } to { opacity: 1; transform: none; } }
+
+  /* ——— AE Project Tree Simulation ——— */
+  .ae-tree-container {
+    height: 380px;
+    overflow-y: auto;
+    background: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: var(--inset);
+    margin-top: 8px;
+    border: 1px solid #000;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 11px;
+    color: #ccc;
+    position: relative;
+  }
+  
+  .ae-tree-container::-webkit-scrollbar { width: 12px; }
+  .ae-tree-container::-webkit-scrollbar-track { background: #1e1e1e; border-left: 1px solid #111; }
+  .ae-tree-container::-webkit-scrollbar-thumb { background: #444; border: 2px solid #1e1e1e; border-radius: 6px; }
+  .ae-tree-container::-webkit-scrollbar-thumb:hover { background: #555; }
+
+  .ae-header {
+    display: flex;
+    background: #2a2a2a;
+    border-bottom: 1px solid #111;
+    padding: 2px 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .ae-header-col { border-right: 1px solid #111; padding: 2px 6px; display: flex; align-items: center; gap: 4px; }
+  .ae-header-col.name { flex: 1; color: #999; font-weight: normal; }
+  .ae-header-col.type { width: 30px; justify-content: center; }
+  .ae-header-col.size { width: 40px; justify-content: center; }
+  .ae-header-col.comment { width: 40px; justify-content: center; }
+
+  .ae-row {
+    display: flex;
+    border-bottom: 1px solid #111;
+    line-height: 18px;
+    transition: background .1s;
+    cursor: default;
+  }
+  .ae-row:hover { background: #2a2d31; }
+  
+  .ae-cell { 
+    border-right: 1px solid #111; 
+    padding: 0 4px; 
+    display: flex; 
+    align-items: center; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ae-cell.name { flex: 1; gap: 4px; padding-left: 4px; }
+  .ae-cell.type { width: 30px; justify-content: center; color: #888; }
+  .ae-cell.size { width: 40px; justify-content: flex-end; color: #888; }
+  .ae-cell.comment { width: 40px; justify-content: center; }
+  
+  .ae-indent { display: inline-block; width: 14px; flex: none; }
+  
+  .ae-icon { width: 14px; height: 14px; flex: none; display: inline-block; background-size: contain; background-repeat: no-repeat; background-position: center; }
+  
+  .icon-comp { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23ff9e00" d="M2 2h12v12H2z"/><path fill="%23000" d="M4 4h8v8H4z"/></svg>'); }
+  .icon-footage { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%234096f3" d="M3 2h10v12H3z"/><path fill="%23fff" d="M7 6l4 2-4 2z"/></svg>'); }
+  .icon-solid { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="%23777"/></svg>'); }
+  .icon-audio { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23a78bfa" d="M2 6h3l4-4v12l-4-4H2z"/></svg>'); }
+  .icon-folder { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23e0b25a" d="M2 4h5l2 2h5v8H2z"/></svg>'); }
+  .icon-ai { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="%23ff9e00"/><text x="8" y="11" fill="%23000" font-size="7" font-family="sans-serif" text-anchor="middle" font-weight="bold">Ai</text></svg>'); }
+  .icon-psd { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="%2331a8ff"/><text x="8" y="11" fill="%23000" font-size="7" font-family="sans-serif" text-anchor="middle" font-weight="bold">Ps</text></svg>'); }
+  .icon-image { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="%23f472b6"/><path fill="%23000" d="M4 4h4v4H4zM10 4h2v2h-2zM4 10h8v2H4z"/></svg>'); }
+  .icon-3d { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23fbbf24" d="M8 2l6 4v6l-6 2-6-2V6z"/><path fill="%23fef3c7" d="M8 4l4 2-4 2-4-2z"/></svg>'); }
+  .icon-missing { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23e8706f" d="M8 2L1 14h14z"/><text x="8" y="12" fill="%23000" font-size="8" font-family="sans-serif" text-anchor="middle" font-weight="bold">?</text></svg>'); }
+  
+  /* Chaos specific styles */
+  .chaos-mode .ae-row { animation: chaos-in .4s ease backwards; }
+  @keyframes chaos-in { from { opacity: 0; transform: translateY(-5px); } }
+  
+  .organizing .ae-row { opacity: 0.2; transform: scale(0.98); transition: all .4s ease; }
+  .organizing .ae-header { opacity: 0.2; }
+
+  .organized-mode .ae-row { animation: org-in .4s ease backwards; }
+  @keyframes org-in { from { opacity: 0; transform: translateY(5px); } }
+
+  /* ——— Folder Toggle (Organized mode) ——— */
+  .folder-row-clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s ease;
+  }
+  .folder-row-clickable:hover {
+    background: #2a2d31;
+  }
+  .folder-arrow {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    flex: none;
+    margin-right: 2px;
+    transition: transform .2s ease;
+    color: #888;
+  }
+  .folder-arrow::before {
+    content: "▼";
+    font-size: 8px;
+    display: inline-block;
+    transform-origin: center;
+    transition: transform .2s ease;
+  }
+  .folder-arrow.collapsed::before {
+    content: "▶";
+  }
+  .folder-children {
+    overflow: hidden;
+    transition: max-height .3s cubic-bezier(.3,.7,.3,1), opacity .2s ease;
+    max-height: 500px;
+    opacity: 1;
+  }
+  .folder-children.collapsed {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  /* ——— Auto-place Simulation Specific ——— */
+  .autoplace-demo-area {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    height: 380px;
+  }
+  
+  .desktop-sim {
+    width: 200px;
+    background: #181818;
+    border-radius: 8px;
+    border: 1px dashed #444;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto;
+    transition: border-color .2s, background .2s;
+  }
+  .desktop-sim::-webkit-scrollbar { width: 6px; }
+  .desktop-sim::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+  
+  .desktop-sim.drag-over {
+    border-color: var(--accent);
+    background: rgba(64,150,243,0.1);
+  }
+  .desktop-sim .desktop-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    margin-bottom: 4px;
+    text-align: center;
+    flex: none;
+  }
+  
+  .draggable-file {
+    width: 100%;
+    height: 32px;
+    background: var(--bg);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    box-shadow: var(--raised-sm);
+    cursor: grab;
+    font-size: 11px;
+    color: var(--text);
+    user-select: none;
+    transition: transform .1s, box-shadow .1s;
+    flex: none;
+  }
+  .draggable-file:active { cursor: grabbing; transform: scale(0.98); box-shadow: var(--inset-sm); }
+  .draggable-file.dragging { opacity: 0.5; }
+  .draggable-file .ae-icon { width: 12px; height: 12px; }
+
+  /* Folder structure visual (for Auto-place drop zone) */
+  .folder-group { margin-bottom: 2px; }
+  .folder-row { padding: 2px 4px; display: flex; align-items: center; gap: 6px; color: #e0b25a; font-weight: 600; }
+  .folder-row .ae-icon { width: 12px; height: 12px; }
+  .folder-items { padding-left: 24px; }
+  .folder-items .ae-row { border-bottom: none; line-height: 16px; }
+  
+  .empty-folder-msg { color: #555; font-style: italic; font-size: 10px; padding: 2px 4px; }
+
+  /* Animations for dropped items */
+  .drop-anim { animation: drop-in .3s cubic-bezier(.3,.7,.3,1) forwards; }
+  @keyframes drop-in {
+    0% { opacity: 0; transform: translateX(-15px) scale(0.9); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  /* ——— Inline Toggle Switch inside test card ——— */
+  .inline-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 14px;
+    height: 38px;
+    border-radius: 11px;
+    box-shadow: var(--raised-sm);
+    margin-top: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow .18s ease;
+    background: var(--bg);
+  }
+  .inline-toggle-row:hover { box-shadow: var(--raised-hv); }
+  .inline-toggle-row .inline-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--sub);
+    transition: color .2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inline-toggle-row.on .inline-label { color: var(--text); }
+  .optional-tag {
+    font-size: 9px;
+    color: var(--dim);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: var(--well);
+    border-radius: 4px;
+    box-shadow: var(--inset-sm);
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* ——— Collapsible Card Styles ——— */
+  .collapsible-content {
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.3, 0.7, 0.3, 1), opacity 0.3s ease, margin 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+  }
+  .collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    pointer-events: none;
+  }
+  
+  .collapse-btn {
+    background: var(--well);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--inset-sm);
+    color: var(--sub);
+    flex: none;
+    transition: color .2s, background .2s;
+  }
+  .collapse-btn:hover { color: var(--text); }
+  .collapse-btn svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.3s ease;
+  }
+  .collapse-btn.collapsed svg { transform: rotate(-90deg); }
+
+  /* ——— Dependencies Simulation Specific ——— */
+  .deps-container {
+    background: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: var(--inset);
+    margin-top: 8px;
+    border: 1px solid #000;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 11px;
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .deps-toolbar {
+    background: #2a2a2a;
+    border-bottom: 1px solid #111;
+    padding: 6px 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  
+  .deps-btn {
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #ccc;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .deps-btn:hover { background: #444; color: #fff; }
+  .deps-btn:active { background: #222; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  .deps-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .deps-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+  
+  .deps-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 300px;
+  }
+  .deps-table::-webkit-scrollbar { width: 10px; }
+  .deps-table::-webkit-scrollbar-track { background: #1e1e1e; }
+  .deps-table::-webkit-scrollbar-thumb { background: #444; border-radius: 6px; }
+  
+  .deps-header {
+    display: flex;
+    background: #2a2a2a;
+    border-bottom: 1px solid #111;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .deps-header > div {
+    padding: 4px 8px;
+    border-right: 1px solid #111;
+    color: #999;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .deps-row {
+    display: flex;
+    border-bottom: 1px solid #111;
+    transition: background 0.2s;
+  }
+  .deps-row:hover { background: #2a2d31; }
+  .deps-row > div {
+    padding: 6px 8px;
+    border-right: 1px solid #111;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .deps-col-name { flex: 2; }
+  .deps-col-type { flex: 1; color: #888; }
+  .deps-col-status { width: 90px; justify-content: center; }
+  .deps-col-path { flex: 1.5; color: #777; font-size: 10px; }
+  
+  .status-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-ok { background: rgba(95,196,138,0.15); color: var(--ok); border: 1px solid rgba(95,196,138,0.3); }
+  .status-missing { background: rgba(232,112,111,0.15); color: var(--err); border: 1px solid rgba(232,112,111,0.3); }
+
+  .deps-empty {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .deps-success-banner {
+    background: rgba(95,196,138,0.1);
+    border: 1px solid rgba(95,196,138,0.3);
+    color: var(--ok);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    display: none;
+    animation: fade-in 0.4s ease;
+  }
+  .deps-success-banner.show { display: block; }
+  
+  @keyframes fade-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+
+  /* ——— Installation & Security Section ——— */
+  .info-section {
+    max-width: 860px;
+    width: 100%;
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .info-card {
+    background: var(--bg);
+    border-radius: 18px;
+    padding: 32px;
+    box-shadow: var(--raised);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+  }
+
+  .info-card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .info-card h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 24px;
+    border-radius: 3px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(64,150,243,0.5);
+  }
+
+  .info-card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--dark);
+    box-shadow: 0 1px 0 var(--light);
+  }
+
+  .info-card p, .info-card li {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--sub);
+  }
+
+  .info-card strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .info-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 0;
+  }
+
+  .info-card ul li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--well);
+    border-radius: 12px;
+    box-shadow: var(--inset-sm);
+    transition: transform 0.2s ease;
+  }
+
+  .info-card ul li:hover {
+    transform: translateX(4px);
+  }
+
+  .info-card ul li::before {
+    content: "›";
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+    flex: none;
+    margin-top: 2px;
+  }
+
+  .info-card ul li b {
+    color: var(--text);
+  }
+
+  .info-card .path-box {
+    background: var(--well);
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: var(--inset);
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    word-break: break-all;
+    border-left: 3px solid var(--accent);
+  }
+
+  .info-card .footer-info {
+    margin-top: 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--dark);
+    box-shadow: 0 -1px 0 var(--light);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--dim);
+    text-align: center;
+  }
+
+  .info-card .footer-info strong {
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .info-card .footer-tagline {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* ——— Power of Consistency Section ——— */
+  .consistency-section {
+    max-width: 860px;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  .consistency-card {
+    background: var(--bg);
+    border-radius: 18px;
+    padding: 40px;
+    box-shadow: var(--raised);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .consistency-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    border-radius: 2px;
+  }
+
+  .consistency-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    margin-bottom: 24px;
+    line-height: 1.4;
+  }
+
+  .consistency-card h2 span {
+    color: var(--accent);
+  }
+
+  .consistency-card p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--sub);
+    margin-bottom: 18px;
+    max-width: 720px;
+  }
+
+  .consistency-card p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .consistency-card .highlight-text {
+    color: var(--text);
+    font-weight: 600;
+    background: linear-gradient(120deg, transparent 0%, rgba(64,150,243,0.1) 100%);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline;
+  }
+
+  /* ——— Flash Warning Box ——— */
+  .consistency-card .warning-box {
+    background: rgba(232,112,111,0.08);
+    border: 1px solid rgba(232,112,111,0.2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    cursor: default;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .consistency-card .warning-box:hover {
+    animation: flash-red 0.2s ease-in-out infinite;
+  }
+
+  @keyframes flash-red {
+    0%, 100% {
+      background: rgba(232,112,111,0.08);
+      border-color: rgba(232,112,111,0.2);
+      box-shadow: 0 0 0 rgba(232,112,111,0);
+    }
+    50% {
+      background: rgba(232,112,111,0.25);
+      border-color: rgba(232,112,111,0.6);
+      box-shadow: 0 0 20px rgba(232,112,111,0.4);
+    }
+  }
+
+  .consistency-card .warning-box::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(232,112,111,0.15);
+    color: var(--err);
+    font-weight: 800;
+    font-size: 14px;
+    flex: none;
+    border: 1px solid rgba(232,112,111,0.3);
+    transition: all 0.3s ease;
+  }
+
+  .consistency-card .warning-box:hover::before {
+    background: var(--err);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(232,112,111,0.8);
+  }
+
+  .consistency-card .warning-box p {
+    margin: 0;
+    color: var(--sub);
+    font-size: 14px;
+    line-height: 1.7;
+    transition: color 0.3s ease;
+  }
+
+  .consistency-card .warning-box:hover p {
+    color: var(--text);
+  }
+
+  .consistency-card .warning-box p strong {
+    color: var(--err);
+    font-weight: 700;
+  }
+
+  /* ——— Flash Conclusion Box ——— */
+  .consistency-card .conclusion {
+    margin-top: 28px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--dark);
+    box-shadow: 0 -1px 0 var(--light);
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--sub);
+    border-radius: 0 0 12px 12px;
+    transition: background 0.3s ease, color 0.3s ease;
+    cursor: default;
+  }
+
+  .consistency-card .conclusion:hover {
+    animation: flash-blue 0.8s ease-in-out infinite;
+  }
+
+  @keyframes flash-blue {
+    0%, 100% {
+      background: transparent;
+      color: var(--sub);
+    }
+    50% {
+      background: rgba(0, 255, 83, 0.32);
+      color: var(--text);
+    }
+  }
+
+  .consistency-card .conclusion strong {
+    color: var(--accent);
+    font-weight: 700;
+    transition: text-shadow 0.3s ease;
+  }
+
+  .consistency-card .conclusion:hover strong {
+    text-shadow: 0 0 10px rgba(64,150,243,0.6);
+  }
+
+  /* ——— Audio Play Button ——— */
+  .audio-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--well);
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--raised-sm);
+    color: var(--sub);
+    flex: none;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+    position: relative;
+    z-index: 5;
+  }
+
+  .audio-control:hover {
+    background: var(--light);
+    color: var(--accent);
+    box-shadow: var(--raised-hv);
+    transform: scale(1.05);
+  }
+
+  .audio-control:active {
+    box-shadow: var(--inset-sm);
+    transform: scale(0.98);
+  }
+
+  .audio-control svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .audio-control.playing {
+    color: var(--accent);
+    background: rgba(64,150,243,0.1);
+    animation: pulse-audio 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-audio {
+    0%, 100% { box-shadow: var(--raised-sm); }
+    50% { box-shadow: 0 0 15px rgba(64,150,243,0.4), var(--raised-sm); }
+  }
+
+  .info-card h2 .audio-control,
+  .consistency-card h2 .audio-control {
+    vertical-align: middle;
+    margin-left: 12px;
+  }
+
+  /* ——— toast ——— */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 12px;
+    box-shadow: var(--raised-sm);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+    z-index: 999;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast .toast-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+  .toast.ok .toast-dot { background: var(--ok); }
+  .toast.warn .toast-dot { background: var(--warn); }
+  .toast.err .toast-dot { background: var(--err); }
+
+  /* responsive */
+  @media (max-width: 700px) {
+    body { padding: 24px 12px 48px; }
+    .presentation { gap: 24px; }
+    .test-card { padding: 18px 16px; }
+    .panel-wrapper { max-width: 100%; }
+    .autoplace-demo-area { flex-direction: column; height: auto; }
+    .desktop-sim { width: 100%; height: 200px; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+    .ae-drop-zone { height: 250px; }
+    .deps-col-path { display: none; }
+    .panel.wide-layout { flex-direction: column; }
+    .panel.wide-layout .btn,
+    .panel.wide-layout .toggle-row { max-width: 100%; }
+    .info-card { padding: 20px; }
+    .info-card h2 { font-size: 15px; }
+    .consistency-card { padding: 24px 20px; }
+    .consistency-card h2 { font-size: 17px; }
+    .consistency-card .warning-box { flex-direction: column; }
+    .consistency-card .warning-box::before { width: 24px; height: 24px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ——— MAIN PRESENTATION LAYOUT ——— -->
+  <div class="presentation" id="mainPresentation">
+
+    <!-- LEFT COLUMN : interactive panel (exactly as original) -->
+    <div class="col" id="panelCol">
+      <div class="label-tag">Lotus Conseil Project Organizer</div>
+      
+      <!-- Responsive Demo Controls -->
+      <div class="responsive-demo">
+        <button class="resize-btn" data-width="320">Wide</button>
+        <button class="resize-btn active" data-width="260">Narrow</button>
+        <button class="resize-btn" data-width="200">Mini</button>
+      </div>
+
+      <div class="panel-wrapper" id="panelWrapper">
+        <div class="panel" id="panel">
+          <div class="header">
+            <div class="title">
+              <small>Lotus Conseil</small>
+              <strong>Project Organizer</strong>
+            </div>
+            <span class="chip">v1.0.0</span>
+          </div>
+
+          <div class="section">Project</div>
+
+          <button class="btn primary" id="organizeBtn">
+            <svg viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h8M2 12.5h12"/></svg>
+            Organize My Project
+          </button>
+
+          <button class="btn danger" id="removeBtn">
+            <svg viewBox="0 0 16 16"><path d="M2.5 4.5h11M6 2.5h4M4 4.5l.6 9h6.8l.6-9M6.5 7v4M9.5 7v4"/></svg>
+            Remove unused files
+          </button>
+
+          <div class="section">Automation</div>
+
+          <div class="toggle-row on" id="toggle" role="switch" aria-checked="true" tabindex="0">
+            <span class="label">Auto-place new items in Assets</span>
+            <span class="switch"></span>
+          </div>
+
+          <div class="section">Info</div>
+
+          <button class="btn" id="aboutBtn">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.2v4M8 4.8v.2"/></svg>
+            About
+          </button>
+
+          <div class="status">
+            <span class="dot" id="dot"></span>
+            <span class="msg" id="msg">Ready</span>
+          </div>
+        </div>
+        
+        <!-- About Popup (Positioned inside wrapper) -->
+        <div class="about hidden" id="aboutBox">
+          <h2>Lotus Conseil Project Organizer</h2>
+          <p><b>Created By:</b> Boudiaf Zakaria<br><b>Version:</b> 1.0.0</p>
+          <div class="sep"></div>
+          <div class="desc-title">Description:</div>
+          <p>This tool automates After Effects project setup for Lotus Conseil customer branding</p>
+          <p class="note">For internal use only (Lotus Conseil).</p>
+          <button class="btn center" id="closeBtn">Close</button>
+        </div>
+
+        <!-- Manual Resize Handle -->
+        <div class="resize-handle" id="resizeHandle" title="Drag to resize panel">
+          <span class="resize-tooltip" id="resizeTooltip">260px</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ——— POWER OF CONSISTENCY SECTION ——— -->
+  <div class="consistency-section">
+    <div class="consistency-card">
+      <h2>
+        The Power of Using This Script Consistently <span>in Every Project, Every Day.</span>
+        <button class="audio-control" id="audioPowerBtn" title="Play voiceover">
+          <svg viewBox="0 0 16 16" id="audioPowerIcon">
+            <polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+      </h2>
+      
+      <p>
+        When this script becomes a regular and consistent part of the workflow, all future projects will be easier to manage, especially when someone other than the original creator needs to work on them. Making modifications will become much easier, without the risk of missing files, broken links, or other project-related issues.
+      </p>
+
+      <p>
+        The real power of this script becomes evident when a client requests an unexpected revision late at night, especially when the changes are complex and time-sensitive. The person responsible for the revision can save valuable time instead of wasting hours searching for missing external assets. Finding just a single missing file can take two to three hours, particularly when that asset was custom-designed specifically for the project rather than downloaded from a stock image or video library.
+      </p>
+
+      <div class="warning-box">
+        <p><strong>And this is where the real disaster begins.</strong></p>
+      </div>
+
+      <p>
+        A missing asset can turn an urgent revision into hours of unnecessary work, wasted time, and avoidable stress.
+      </p>
+
+      <div class="conclusion">
+        <strong>This is exactly the kind of problem the script is designed to prevent</strong>, provided it is used consistently as part of the daily workflow.
+      </div>
+    </div>
+  </div>
+
+  <!-- ——— INTERACTIVE TESTS ——— -->
+  <div class="tests" id="tests">
+
+    <!-- test 1 : organize (collapsible) -->
+    <div class="test-card" id="test-organize">
+      <div class="test-head">
+        <span class="test-num">01</span>
+        <h3>Organize My Project</h3>
+        <button class="collapse-btn" data-target="content-organize" title="Collapse/Expand">
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <button class="btn-test accent" id="demoOrganizeBtn" style="margin-left:auto;">
+          <svg viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h8M2 12.5h12"/></svg>
+          Run Organize
+        </button>
+      </div>
+      <div class="collapsible-content" id="content-organize">
+        <p style="margin-bottom: 8px;">
+          <b>The Problem:</b> Footage everywhere. Solids scattered. Comps you can't find. <br>
+          <b>The Solution:</b> Click Organize. Everything sorts into <span class="highlight">Assets</span> instantly.
+        </p>
+        
+        <div class="ae-tree-container chaos-mode" id="aeTree">
+          <div class="ae-header">
+            <div class="ae-header-col name">Name</div>
+            <div class="ae-header-col type"></div>
+            <div class="ae-header-col size"></div>
+            <div class="ae-header-col comment"></div>
+          </div>
+          <div id="aeRows">
+            <!-- Content injected by JS -->
+          </div>
+        </div>
+
+        <div class="feedback" id="feedback-organize" style="margin-top: 8px;">
+          <span class="fb-dot"></span>
+          <span class="fb-text">Waiting for demo…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- test 2 : remove unused (collapsible) -->
+    <div class="test-card" id="test-remove">
+      <div class="test-head">
+        <span class="test-num">02</span>
+        <h3>Remove unused files</h3>
+        <button class="collapse-btn" data-target="content-remove" title="Collapse/Expand">
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <button class="btn-test danger" data-demo="remove" style="margin-left:auto;">
+          <svg viewBox="0 0 16 16"><path d="M2.5 4.5h11M6 2.5h4M4 4.5l.6 9h6.8l.6-9M6.5 7v4M9.5 7v4"/></svg>
+          Run demo
+        </button>
+      </div>
+      <div class="collapsible-content" id="content-remove">
+        <p style="margin-bottom: 8px;">
+          Click <b>Remove unused files</b>. The tool scans every layer, including nested pre-comps, and shows you
+          the numbers first. <b>You confirm before anything is removed.</b> Folders stay in place.
+        </p>
+        <div class="tree" id="removeTree">
+          <div class="tree-row"><span class="indent"></span><span class="file-icon folder"></span><span class="file-name">Assets</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:16px"></span><span class="file-icon folder"></span><span class="file-name">Comps</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon comp"></span><span class="file-name">Comp 1</span><span class="file-status ok">used</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon comp"></span><span class="file-name">Comp 2</span><span class="file-status err">unused</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:16px"></span><span class="file-icon folder"></span><span class="file-name">Solids</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon solid"></span><span class="file-name">Solid 1</span><span class="file-status ok">used</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon solid"></span><span class="file-name">Solid 2</span><span class="file-status err">unused</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:16px"></span><span class="file-icon folder"></span><span class="file-name">Audio</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon audio"></span><span class="file-name">track.mp3</span><span class="file-status ok">used</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:16px"></span><span class="file-icon folder"></span><span class="file-name">Video</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon video"></span><span class="file-name">clip.mov</span><span class="file-status ok">used</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:16px"></span><span class="file-icon folder"></span><span class="file-name">Images</span><span class="file-status"></span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon image"></span><span class="file-name">photo.png</span><span class="file-status ok">used</span></div>
+          <div class="tree-row"><span class="indent" style="padding-left:32px"></span><span class="file-icon image"></span><span class="file-name">extra.png</span><span class="file-status err">unused</span></div>
+        </div>
+        <div class="feedback" id="feedback-remove" style="margin-top: 8px;">
+          <span class="fb-dot"></span>
+          <span class="fb-text">Waiting for demo…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- test 3 : auto-place toggle (with Run Organize button) -->
+    <div class="test-card" id="test-toggle">
+      <div class="test-head">
+        <span class="test-num">03</span>
+        <h3>Auto-place toggle</h3>
+        <button class="collapse-btn" data-target="content-toggle" title="Collapse/Expand">
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <button class="btn-test accent" id="runOrganizeAutoPlaceBtn" style="margin-left:auto;">
+          <svg viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h8M2 12.5h12"/></svg>
+          Run Organize
+        </button>
+        <button class="btn-test" id="resetAutoPlaceBtn">
+          <svg viewBox="0 0 16 16"><path d="M3 8a5 5 0 1 0 1-3l2 2"/><path d="M3 3v4h4"/></svg>
+          Reset
+        </button>
+      </div>
+      <div class="collapsible-content" id="content-toggle">
+        <p style="margin-bottom: 8px;">
+          <b>ON:</b> New files are detected and sorted into the correct <span class="highlight">Assets</span> subfolder.
+          <b>OFF:</b> New files are placed <b>outside</b> the Assets folder (at project root), unsorted. This feature is <b>optional</b>.
+          <br><br>
+          Use <b>Run Organize</b> to clean up any files placed outside the Assets folder.
+        </p>
+
+        <!-- Inline Toggle Switch — exact same design as main panel toggle -->
+        <div class="toggle-row on" id="inlineToggle" role="switch" aria-checked="true" tabindex="0">
+          <span class="label">Auto-place new items in Assets <span class="optional-tag">Optional</span></span>
+          <span class="switch"></span>
+        </div>
+
+        <!-- AE Project Tree Simulation -->
+        <div class="ae-tree-container" id="autoPlaceTree" style="height: 380px;">
+          <div class="ae-header">
+            <div class="ae-header-col name">Name</div>
+            <div class="ae-header-col type"></div>
+            <div class="ae-header-col size"></div>
+            <div class="ae-header-col comment"></div>
+          </div>
+          <div id="autoPlaceRows">
+            <!-- Folders and dropped files injected by JS -->
+          </div>
+        </div>
+
+        <!-- Desktop simulation (draggable files) -->
+        <div class="desktop-sim" id="desktopSim" style="width: 100%; height: auto; margin-top: 12px; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; padding: 12px; gap: 6px;">
+          <div class="desktop-label" style="width: 100%; margin-bottom: 6px;">Desktop — Drag any file into the project</div>
+          <div class="draggable-file" draggable="true" data-type="image" data-name="logo.png" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-image"></span> logo.png
+          </div>
+          <div class="draggable-file" draggable="true" data-type="audio" data-name="track.wav" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-audio"></span> track.wav
+          </div>
+          <div class="draggable-file" draggable="true" data-type="video" data-name="clip.mp4" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-footage"></span> clip.mp4
+          </div>
+          <div class="draggable-file" draggable="true" data-type="comp" data-name="New Comp" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-comp"></span> New Comp
+          </div>
+          <div class="draggable-file" draggable="true" data-type="solid" data-name="Solid Layer" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-solid"></span> Solid Layer
+          </div>
+          <div class="draggable-file" draggable="true" data-type="3d" data-name="model.obj" style="width: calc(50% - 4px);">
+            <span class="ae-icon icon-3d"></span> model.obj
+          </div>
+        </div>
+
+        <div class="feedback" id="feedback-toggle" style="margin-top: 8px;">
+          <span class="fb-dot"></span>
+          <span class="fb-text">Toggle is ON — drag a file into the project panel above to test auto-place.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- test 4 : Dependencies (Replaces About popup) -->
+    <div class="test-card" id="test-dependencies">
+      <div class="test-head">
+        <span class="test-num">04</span>
+        <h3>Dependencies (File > Dependencies > Collect Files)</h3>
+        <button class="collapse-btn" data-target="content-deps" title="Collapse/Expand">
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <button class="btn-test accent" id="depsScanBtn2" style="margin-left:auto;">
+          <svg viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h8M2 12.5h12"/></svg>
+          Run Demo
+        </button>
+      </div>
+      <div class="collapsible-content" id="content-deps">
+        <p style="margin-bottom: 8px;">
+          Before organizing, your project is a mess. Assets are scattered across your <b>Desktop</b>, <b>Downloads</b>, <b>D: drive</b>, <b>E: drive</b>, or even linked from <b>another After Effects project</b>. Some are <b>Linked</b>, others are <b>Missing</b>.
+          <br><br>
+          Use the native <b>File > Dependencies > Collect Files</b> to gather everything into one place. This makes the project <b>complete and portable</b> before you run Lotus Conseil.
+        </p>
+
+        <div class="deps-container">
+          <div class="deps-toolbar">
+            <button class="deps-btn" id="depsScanBtn">
+              <svg viewBox="0 0 16 16"><path d="M2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zM8 4v4l3 2"/></svg>
+              Scan Dependencies
+            </button>
+            <button class="deps-btn" id="depsFixBtn" disabled>
+              <svg viewBox="0 0 16 16"><path d="M4 12l8-8M4 4l8 8"/></svg>
+              Fix Missing Links
+            </button>
+            <button class="deps-btn" id="depsCollectBtn" disabled>
+              <svg viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-5"/></svg>
+              Collect Files
+            </button>
+          </div>
+          
+          <div class="deps-table" id="depsTable">
+            <div class="deps-header">
+              <div class="deps-col-name">Name</div>
+              <div class="deps-col-type">Type</div>
+              <div class="deps-col-status">Status</div>
+              <div class="deps-col-path">Path</div>
+            </div>
+            <div id="depsRows">
+              <!-- Rows injected by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="deps-success-banner" id="depsSuccessBanner">
+          ✔ Project Successfully Collected. Assets Consolidated. Ready for Seamless Organization on the Lotus Conseil Storage Server.
+        </div>
+
+        <div class="feedback" id="feedback-deps" style="margin-top: 8px;">
+          <span class="fb-dot"></span>
+          <span class="fb-text">Click "Scan Dependencies" to see the chaos.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- test 5 : smart file recognition (collapsible) -->
+    <div class="test-card" id="test-smart">
+      <div class="test-head">
+        <span class="test-num">05</span>
+        <h3>Smart File Recognition</h3>
+        <button class="collapse-btn" data-target="content-smart" title="Collapse/Expand">
+          <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <button class="btn-test accent" data-demo="smart" style="margin-left:auto;">
+          <svg viewBox="0 0 16 16"><path d="M2 3.5h12M2 8h8M2 12.5h12"/></svg>
+          Drop a file
+        </button>
+      </div>
+      <div class="collapsible-content" id="content-smart">
+        <p style="margin-bottom: 8px;">
+          Drop any file — the script instantly detects its format and automatically sorts it into the right
+          asset folder. <span class="highlight">No manual sorting.</span>
+        </p>
+        <div class="feedback" id="feedback-smart">
+          <span class="fb-dot"></span>
+          <span class="fb-text">Waiting for demo…</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ——— INSTALLATION, SECURITY & SYSTEM COMPATIBILITY ——— -->
+  <div class="info-section">
+    <div class="info-card">
+      <h2>
+        Installation, Security & System Compatibility
+        <button class="audio-control" id="audioInfoBtn" title="Play voiceover">
+          <svg viewBox="0 0 16 16" id="audioInfoIcon">
+            <polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+      </h2>
+      
+      <p>
+        This script follows a standard installation process, consistent with other Adobe After Effects scripts and CEP extensions.
+      </p>
+
+      <h3>Installation Methods</h3>
+      <p>There are two ways to install the script:</p>
+      <ul>
+        <li><b>Method 1 — Installer:</b> Using a compatible ZXP/UXP extension installer, depending on the package format.</li>
+        <li><b>Method 2 — Manual Installation:</b> Copying the extension files to the following directory:</li>
+      </ul>
+      <div class="path-box">C:\Program Files\Common Files\Adobe\CEP\extensions</div>
+
+      <h3>System Performance & Security</h3>
+      <ul>
+        <li><b>No Impact on System Performance:</b> The extension is designed to operate within Adobe After Effects without interfering with the overall performance of the host computer.</li>
+        <li><b>No Internet Bandwidth Consumption:</b> The extension does not require an active internet connection or consume internet bandwidth during normal operation.</li>
+        <li><b>No Unauthorized File Modifications:</b> The extension is designed to interact only with files and project assets required for its intended functions. It does not modify unrelated files or access their contents unnecessarily.</li>
+        <li><b>No Centralized Server Dependency:</b> The extension does not require installation on a centralized server or a shared server environment for collaborative use.</li>
+        <li><b>Dedicated After Effects Integration:</b> The extension is designed exclusively for Adobe After Effects and operates within its CEP extension environment, without requiring integration with unrelated applications.</li>
+      </ul>
+
+      <h3>A Dedicated, Self-Contained Workflow</h3>
+      <p>
+        Built specifically for Adobe After Effects, this extension provides a dedicated workflow with no unnecessary external dependencies. Its operation is focused on its intended functions within the host application, keeping the installation straightforward and the system footprint controlled.
+      </p>
+
+      <div class="footer-info">
+        <strong>Lotus Conseil Project Organizer · Less sorting. More creating.</strong>
+        <span>Created By: Boudiaf Zakaria</span>
+        <span>Version: 1.0.0</span>
+        <div class="sep" style="width: 60px; margin: 8px auto; height: 2px; background: var(--well); box-shadow: var(--inset-sm); border-radius: 2px;"></div>
+        <span><b>Description:</b> This tool automates After Effects project setup for Lotus Conseil customer branding</span>
+        <span class="footer-tagline">For internal use only (Lotus Conseil).</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ——— toast ——— -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastText">Ready</span>
+  </div>
+
+  <!-- ——— AUDIO ELEMENTS (User to add files in root) ——— -->
+  <audio id="audioPower" preload="none">
+    <source src="Assets/The%20Power%20of%20Using%20This%20Script.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="audioInfo" preload="none">
+    <source src="Assets/Installation%20Security%20&%20System%20Compatibility.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- ——— JAVASCRIPT ——— -->
+  <script>
+    // ——— core elements ———
+    var toggle = document.getElementById('toggle');
+    var dot = document.getElementById('dot');
+    var msg = document.getElementById('msg');
+    var aboutBox = document.getElementById('aboutBox');
+    var aboutBtn = document.getElementById('aboutBtn');
+    var closeBtn = document.getElementById('closeBtn');
+    var organizeBtn = document.getElementById('organizeBtn');
+    var removeBtn = document.getElementById('removeBtn');
+    var panelWrapper = document.getElementById('panelWrapper');
+    var panel = document.getElementById('panel');
+    var mainPresentation = document.getElementById('mainPresentation');
+    var panelCol = document.getElementById('panelCol');
+    var resizeHandle = document.getElementById('resizeHandle');
+    var resizeTooltip = document.getElementById('resizeTooltip');
+
+    // Audio elements & buttons
+    var audioPower = document.getElementById('audioPower');
+    var audioInfo = document.getElementById('audioInfo');
+    var audioPowerBtn = document.getElementById('audioPowerBtn');
+    var audioInfoBtn = document.getElementById('audioInfoBtn');
+    var audioPowerIcon = document.getElementById('audioPowerIcon');
+    var audioInfoIcon = document.getElementById('audioInfoIcon');
+
+    // ——— Audio Play/Pause Logic ———
+    function toggleAudio(audioEl, btnEl, iconEl, otherAudio, otherBtn, otherIcon) {
+      if (otherAudio && !otherAudio.paused) {
+        otherAudio.pause();
+        otherAudio.currentTime = 0;
+        otherBtn.classList.remove('playing');
+        otherIcon.innerHTML = '<polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>';
+      }
+
+      if (audioEl.paused) {
+        audioEl.play().then(function() {
+          btnEl.classList.add('playing');
+          iconEl.innerHTML = '<rect x="4" y="3" width="3" height="10" fill="currentColor" stroke="none"/><rect x="9" y="3" width="3" height="10" fill="currentColor" stroke="none"/>';
+        }).catch(function(err) {
+          console.warn('Audio play failed:', err);
+          showToast('Audio file not found. Please add "' + (audioEl === audioPower ? 'The Power of Using This Script.mp3' : 'Installation Security & System Compatibility.mp3') + '" to the project folder.', 'warn');
+        });
+      } else {
+        audioEl.pause();
+        btnEl.classList.remove('playing');
+        iconEl.innerHTML = '<polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>';
+      }
+    }
+
+    audioPowerBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleAudio(audioPower, audioPowerBtn, audioPowerIcon, audioInfo, audioInfoBtn, audioInfoIcon);
+    });
+
+    audioInfoBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleAudio(audioInfo, audioInfoBtn, audioInfoIcon, audioPower, audioPowerBtn, audioPowerIcon);
+    });
+
+    audioPower.addEventListener('ended', function() {
+      audioPowerBtn.classList.remove('playing');
+      audioPowerIcon.innerHTML = '<polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>';
+    });
+
+    audioInfo.addEventListener('ended', function() {
+      audioInfoBtn.classList.remove('playing');
+      audioInfoIcon.innerHTML = '<polygon points="5,3 13,8 5,13" fill="currentColor" stroke="none"/>';
+    });
+
+    // feedback elements
+    var fbOrganize = document.getElementById('feedback-organize');
+    var fbRemove = document.getElementById('feedback-remove');
+    var fbToggle = document.getElementById('feedback-toggle');
+    var fbSmart = document.getElementById('feedback-smart');
+    var fbDeps = document.getElementById('feedback-deps');
+
+    // AE Tree elements
+    var aeTreeContainer = document.getElementById('aeTree');
+    var aeRowsContainer = document.getElementById('aeRows');
+
+    // Auto-place simulation elements
+    var desktopSim = document.getElementById('desktopSim');
+    var resetAutoPlaceBtn = document.getElementById('resetAutoPlaceBtn');
+    var inlineToggle = document.getElementById('inlineToggle');
+    var autoPlaceTree = document.getElementById('autoPlaceTree');
+    var autoPlaceRows = document.getElementById('autoPlaceRows');
+    var runOrganizeAutoPlaceBtn = document.getElementById('runOrganizeAutoPlaceBtn');
+
+    // Dependencies elements
+    var depsTable = document.getElementById('depsTable');
+    var depsRows = document.getElementById('depsRows');
+    var depsScanBtn = document.getElementById('depsScanBtn');
+    var depsFixBtn = document.getElementById('depsFixBtn');
+    var depsCollectBtn = document.getElementById('depsCollectBtn');
+    var depsSuccessBanner = document.getElementById('depsSuccessBanner');
+
+    // ——— Collapsible Logic ———
+    document.querySelectorAll('.collapse-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var targetId = btn.dataset.target;
+        var target = document.getElementById(targetId);
+        if (!target) return;
+        
+        var isCollapsed = target.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed', isCollapsed);
+      });
+    });
+
+    // ——— Responsive Panel Logic (Buttons + Manual Resize) ———
+    var currentWidth = 260;
+    var minWidth = 200;
+    var maxWidth = window.innerWidth - 48;
+
+    function setPanelWidth(width) {
+      if (width < minWidth) width = minWidth;
+      if (width > maxWidth) width = maxWidth;
+      
+      currentWidth = width;
+      panelWrapper.style.maxWidth = width + 'px';
+      panelWrapper.style.width = width + 'px';
+      
+      if (width > 600) {
+        panelWrapper.classList.add('wide-mode');
+        panel.classList.add('wide-layout');
+        panelCol.classList.add('wide-mode');
+        mainPresentation.classList.add('wide-mode');
+      } else {
+        panelWrapper.classList.remove('wide-mode');
+        panel.classList.remove('wide-layout');
+        panelCol.classList.remove('wide-mode');
+        mainPresentation.classList.remove('wide-mode');
+      }
+      
+      resizeTooltip.textContent = width + 'px';
+      
+      document.querySelectorAll('.resize-btn').forEach(function(b) {
+        var bw = parseInt(b.dataset.width);
+        b.classList.toggle('active', Math.abs(bw - width) < 10);
+      });
+    }
+
+    document.querySelectorAll('.resize-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var width = parseInt(btn.dataset.width);
+        if (width === 320 && btn.textContent.trim() === 'Wide') {
+          width = window.innerWidth - 48;
+        }
+        setPanelWidth(width);
+      });
+    });
+
+    var isResizing = false;
+    var startX = 0;
+    var startWidth = 0;
+
+    resizeHandle.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = panelWrapper.offsetWidth;
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      var delta = e.clientX - startX;
+      var newWidth = startWidth + delta;
+      if (newWidth < minWidth) newWidth = minWidth;
+      if (newWidth > maxWidth) newWidth = maxWidth;
+      setPanelWidth(newWidth);
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+
+    resizeHandle.addEventListener('dblclick', function() {
+      if (currentWidth <= 210) setPanelWidth(260);
+      else if (currentWidth <= 270) setPanelWidth(320);
+      else if (currentWidth <= 400) setPanelWidth(window.innerWidth - 48);
+      else setPanelWidth(200);
+    });
+
+    window.addEventListener('resize', function() {
+      maxWidth = window.innerWidth - 48;
+      if (currentWidth > maxWidth) setPanelWidth(maxWidth);
+    });
+
+    setPanelWidth(260);
+
+    // ——— status / toast helpers ———
+    function setStatus(text, tone) {
+      msg.textContent = text;
+      dot.className = 'dot ' + (tone || '');
+      void dot.offsetWidth;
+      dot.classList.add('pulse');
+      msg.style.animation = 'none'; void msg.offsetWidth; msg.style.animation = '';
+    }
+
+    function showFeedback(el, text, tone) {
+      el.classList.remove('active', 'ok', 'warn', 'err');
+      var dotEl = el.querySelector('.fb-dot');
+      var textEl = el.querySelector('.fb-text');
+      textEl.textContent = text;
+      if (tone) el.classList.add(tone);
+      else el.classList.add('active');
+      if (dotEl) {
+        dotEl.style.background = tone === 'ok' ? 'var(--ok)' :
+                                 tone === 'warn' ? 'var(--warn)' :
+                                 tone === 'err' ? 'var(--err)' :
+                                 'var(--accent)';
+        dotEl.style.boxShadow = tone === 'ok' ? '0 0 6px rgba(95,196,138,.7)' :
+                                tone === 'warn' ? '0 0 6px rgba(224,178,90,.7)' :
+                                tone === 'err' ? '0 0 6px rgba(232,112,111,.7)' :
+                                '0 0 6px rgba(64,150,243,.7)';
+      }
+      textEl.style.animation = 'none'; void textEl.offsetWidth; textEl.style.animation = '';
+    }
+
+    var toastEl = document.getElementById('toast');
+    var toastText = document.getElementById('toastText');
+    var toastTimer = null;
+
+    function showToast(text, tone) {
+      toastText.textContent = text;
+      toastEl.className = 'toast show ' + (tone || '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toastEl.classList.remove('show');
+      }, 3000);
+    }
+
+    // ——— About Popup Logic ———
+    aboutBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      aboutBox.classList.remove('hidden');
+      setStatus('About opened', '');
+      showToast('About popup opened', '');
+    });
+
+    closeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      aboutBox.classList.add('hidden');
+      setStatus('About closed', '');
+      showToast('About popup closed', '');
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!aboutBox.classList.contains('hidden') && 
+          !aboutBox.contains(e.target) && 
+          e.target !== aboutBtn && 
+          !aboutBtn.contains(e.target)) {
+        aboutBox.classList.add('hidden');
+      }
+    });
+
+    // ——— AE Tree Generator (Organize Demo) ———
+    function createRow(name, iconClass, indentLevel, size = '', comment = '', extraClass = '') {
+      var indent = '';
+      for(var i=0; i<indentLevel; i++) {
+        indent += '<span class="ae-indent"></span>';
+      }
+      
+      return `<div class="ae-row ${extraClass}">
+        <div class="ae-cell name">${indent}<span class="ae-icon ${iconClass}"></span>${name}</div>
+        <div class="ae-cell type"></div>
+        <div class="ae-cell size">${size}</div>
+        <div class="ae-cell comment">${comment}</div>
+      </div>`;
+    }
+
+    var chaosItems = [
+      { name: '00 - Main Composition Project', icon: 'icon-comp', type: 'comp' },
+      { name: '01.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '01.png', icon: 'icon-image', type: 'image' },
+      { name: '02.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '02.png', icon: 'icon-image', type: 'image' },
+      { name: '03.png', icon: 'icon-image', type: 'image' },
+      { name: '04.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '05.png', icon: 'icon-image', type: 'image' },
+      { name: '06 cadenas', icon: 'icon-comp', type: 'comp' },
+      { name: '06 vector', icon: 'icon-comp', type: 'comp' },
+      { name: '06 wifi', icon: 'icon-comp', type: 'comp' },
+      { name: '07', icon: 'icon-comp', type: 'comp' },
+      { name: '07 cadenas', icon: 'icon-comp', type: 'comp' },
+      { name: '07.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '08.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '08.png', icon: 'icon-image', type: 'image' },
+      { name: '09.mp4', icon: 'icon-footage', type: 'video' },
+      { name: '09.png', icon: 'icon-image', type: 'image' },
+      { name: '9-16', icon: 'icon-comp', type: 'comp' },
+      { name: '10.png', icon: 'icon-image', type: 'image' },
+      { name: 'Adjustment Layer 1', icon: 'icon-solid', type: 'solid' },
+      { name: 'BG', icon: 'icon-comp', type: 'comp' },
+      { name: 'Ellipse 1 copie/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Ellipse 1 copie/07.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Ellipse 1/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Fond 1/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Fond 1/07.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Forme 1/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Forme 1/07.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Generated Light Leak 4', icon: 'icon-comp', type: 'comp' },
+      { name: 'Layer 2/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 5/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 6/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 7/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 8/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 9/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 10/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 11/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 12/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 13/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 14/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 15/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 16/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 17/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 18/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 20/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 21/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Layer 22/06 vector.ai', icon: 'icon-ai', type: 'image' },
+      { name: 'Man', icon: 'icon-comp', type: 'comp' },
+      { name: 'Objet dynamique vectoriel copie/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Objet dynamique vectoriel/06.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Objet dynamique vectoriel/07.psd', icon: 'icon-psd', type: 'image' },
+      { name: 'Out', icon: 'icon-comp', type: 'comp' },
+      { name: 'Out Story.mp4', icon: 'icon-footage', type: 'video' },
+      { name: 'Possibilities.wav', icon: 'icon-audio', type: 'audio' },
+      { name: 'Slide 01', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 02', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 03', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 04', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 05', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 06', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 07', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 08', icon: 'icon-comp', type: 'comp' },
+      { name: 'Slide 09', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 01', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 02', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 03', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 04', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 05', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 06', icon: 'icon-comp', type: 'comp' },
+      { name: 'TXT 07', icon: 'icon-comp', type: 'comp' },
+      { name: 'Woman', icon: 'icon-comp', type: 'comp' },
+      { name: 'Woman', icon: 'icon-comp', type: 'comp' }
+    ];
+
+    var organizedStructure = {
+      'Main Comp': { name: '00 - Main Composition Project', icon: 'icon-comp' },
+      'Assets': {
+        'Comps': [],
+        'Solids': [],
+        'Audio': [],
+        'Images': [],
+        'Video': []
+      }
+    };
+
+    function buildOrganizedStructure() {
+      organizedStructure.Assets = {
+        'Comps': [],
+        'Solids': [],
+        'Audio': [],
+        'Images': [],
+        'Video': []
+      };
+      
+      chaosItems.forEach(function(item) {
+        if (item.name === '00 - Main Composition Project') return;
+        
+        var folder = null;
+        if (item.type === 'comp') folder = 'Comps';
+        else if (item.type === 'solid') folder = 'Solids';
+        else if (item.type === 'audio') folder = 'Audio';
+        else if (item.type === 'image') folder = 'Images';
+        else if (item.type === 'video') folder = 'Video';
+        else if (item.type === '3d') folder = 'Images';
+        else folder = 'Images';
+        
+        if (organizedStructure.Assets[folder]) {
+          organizedStructure.Assets[folder].push({
+            name: item.name,
+            icon: item.icon
+          });
+        }
+      });
+    }
+
+    function renderChaos() {
+      aeTreeContainer.classList.remove('organized-mode');
+      aeTreeContainer.classList.add('chaos-mode');
+      
+      var html = '';
+      chaosItems.forEach(function(item) {
+        html += `<div class="ae-row">
+          <div class="ae-cell name"><span class="ae-icon ${item.icon}"></span>${item.name}</div>
+          <div class="ae-cell type"></div>
+          <div class="ae-cell size"></div>
+          <div class="ae-cell comment"></div>
+        </div>`;
+      });
+      
+      aeRowsContainer.innerHTML = html;
+      aeRowsContainer.scrollTop = 0;
+    }
+
+    var folderStates = {};
+
+    function renderOrganized() {
+      buildOrganizedStructure();
+      aeTreeContainer.classList.remove('chaos-mode');
+      aeTreeContainer.classList.add('organized-mode');
+      folderStates = {};
+      
+      var html = '';
+      
+      html += `<div class="ae-row">
+        <div class="ae-cell name"><span class="ae-icon icon-comp"></span>00 - Main Composition Project</div>
+        <div class="ae-cell type"></div>
+        <div class="ae-cell size"></div>
+        <div class="ae-cell comment"></div>
+      </div>`;
+      
+      html += `<div class="ae-row" style="background:#252525;">
+        <div class="ae-cell name"><span class="ae-icon icon-folder"></span><strong>Assets</strong></div>
+        <div class="ae-cell type"></div>
+        <div class="ae-cell size"></div>
+        <div class="ae-cell comment"></div>
+      </div>`;
+      
+      var folderOrder = ['Comps', 'Solids', 'Audio', 'Images', 'Video'];
+      
+      folderOrder.forEach(function(folder) {
+        var items = organizedStructure.Assets[folder];
+        var isCollapsed = folderStates[folder] === true;
+        var collapsedClass = isCollapsed ? 'collapsed' : '';
+        var arrowClass = isCollapsed ? 'collapsed' : '';
+        
+        html += `<div class="ae-row folder-row-clickable" data-folder="${folder}" style="padding-left:14px;">
+          <div class="ae-cell name">
+            <span class="folder-arrow ${arrowClass}"></span>
+            <span class="ae-icon icon-folder"></span>
+            <strong>${folder}</strong>
+            <span style="color:#666; font-size:10px; margin-left:4px;">(${items.length})</span>
+          </div>
+          <div class="ae-cell type"></div>
+          <div class="ae-cell size"></div>
+          <div class="ae-cell comment"></div>
+        </div>`;
+        
+        html += `<div class="folder-children ${collapsedClass}" data-folder-children="${folder}">`;
+        
+        if (items.length === 0) {
+          html += `<div class="ae-row" style="padding-left:42px;">
+            <div class="ae-cell name" style="color:#555; font-style:italic; font-size:10px;">(empty)</div>
+            <div class="ae-cell type"></div>
+            <div class="ae-cell size"></div>
+            <div class="ae-cell comment"></div>
+          </div>`;
+        } else {
+          items.forEach(function(item) {
+            html += `<div class="ae-row" style="padding-left:42px;">
+              <div class="ae-cell name"><span class="ae-icon ${item.icon}"></span>${item.name}</div>
+              <div class="ae-cell type"></div>
+              <div class="ae-cell size"></div>
+              <div class="ae-cell comment"></div>
+            </div>`;
+          });
+        }
+        
+        html += `</div>`;
+      });
+      
+      aeRowsContainer.innerHTML = html;
+      aeRowsContainer.scrollTop = 0;
+      
+      aeRowsContainer.querySelectorAll('.folder-row-clickable').forEach(function(row) {
+        row.addEventListener('click', function() {
+          var folderName = row.dataset.folder;
+          var children = aeRowsContainer.querySelector('[data-folder-children="' + folderName + '"]');
+          var arrow = row.querySelector('.folder-arrow');
+          
+          var currentlyCollapsed = folderStates[folderName] === true;
+          folderStates[folderName] = !currentlyCollapsed;
+          
+          if (folderStates[folderName]) {
+            children.classList.add('collapsed');
+            arrow.classList.add('collapsed');
+          } else {
+            children.classList.remove('collapsed');
+            arrow.classList.remove('collapsed');
+          }
+        });
+      });
+    }
+
+    renderChaos();
+
+    // ——— 1. ORGANIZE MY PROJECT ———
+    function runOrganizeDemo() {
+      setStatus('Organizing project…', 'warn');
+      showFeedback(fbOrganize, '⏳ Scanning project for assets…', 'warn');
+      showToast('Organizing project…', 'warn');
+      
+      aeTreeContainer.classList.add('organizing');
+      aeTreeContainer.classList.remove('chaos-mode', 'organized-mode');
+
+      setTimeout(function () {
+        renderOrganized();
+        aeTreeContainer.classList.remove('organizing');
+        
+        setStatus('Organized 24 item(s)', 'ok');
+        showFeedback(fbOrganize, '✔ Project organized — all items sorted into Assets folders', 'ok');
+        showToast('Organized all items into Assets', 'ok');
+      }, 600);
+    }
+
+    organizeBtn.addEventListener('click', runOrganizeDemo);
+    document.getElementById('demoOrganizeBtn').addEventListener('click', runOrganizeDemo);
+
+    // ——— 2. REMOVE UNUSED ———
+    removeBtn.addEventListener('click', function () {
+      setStatus('Removed 6 unused item(s) - folders kept', 'warn');
+      showFeedback(fbRemove, '⚠ Scanning… 6 unused items found. Confirm to remove.', 'warn');
+      showToast('6 unused items found — confirm to remove', 'warn');
+
+      var rows = document.querySelectorAll('#removeTree .tree-row');
+      var unused = [];
+      rows.forEach(function (row) {
+        var status = row.querySelector('.file-status');
+        if (status && status.textContent === 'unused') {
+          unused.push(row);
+          var name = row.querySelector('.file-name');
+          if (name) name.classList.add('highlight');
+          var icon = row.querySelector('.file-icon');
+          if (icon) icon.style.opacity = '1';
+        }
+      });
+
+      setTimeout(function () {
+        unused.forEach(function (row) {
+          row.classList.add('removing');
+        });
+        showFeedback(fbRemove, '✔ Removed 6 unused item(s) — folders kept', 'ok');
+        showToast('Removed 6 unused items — folders kept', 'ok');
+        setStatus('Removed 6 unused item(s) - folders kept', 'warn');
+      }, 1200);
+    });
+
+    // ——— 3. AUTO-PLACE TOGGLE ———
+    var autoPlaceOn = true;
+    
+    var autoPlaceFolders = {
+      Comps: [],
+      Solids: [],
+      Audio: [],
+      Images: [],
+      Video: []
+    };
+    var autoPlaceRootItems = [];
+
+    var extensions = {
+      audio: ['wav', 'mp3', 'aif', 'aiff', 'aac', 'm4a', 'wma', 'ogg'],
+      video: ['mp4', 'mov', 'avi', 'mpg', 'mpeg', 'm4v', 'mxf', 'wmv', 'flv', 'webm', 'r3d', 'ari', 'arx', 'dng'],
+      images: ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'bmp', 'gif', 'tga', 'psd', 'exr', 'hdr', 'heif', 'heic', 'prproj', 'aep', 'mogrt', 'dpx', 'cin', 'ai', 'eps', 'pdf'],
+      '3d': ['glb', 'gltf', 'c4d', 'fbx', 'obj']
+    };
+
+    function getFolderForFile(filename) {
+      var parts = filename.split('.');
+      if (parts.length < 2) return 'Images';
+      var ext = parts.pop().toLowerCase();
+      
+      if (extensions.audio.includes(ext)) return 'Audio';
+      if (extensions.video.includes(ext)) return 'Video';
+      if (extensions.images.includes(ext)) return 'Images';
+      if (extensions['3d'].includes(ext)) return 'Images';
+      
+      return 'Images';
+    }
+
+    function getIconForFile(name, type) {
+      if (type === 'comp') return 'icon-comp';
+      if (type === 'solid') return 'icon-solid';
+      if (type === '3d') return 'icon-3d';
+      if (name.endsWith('.psd')) return 'icon-psd';
+      if (name.endsWith('.ai')) return 'icon-ai';
+      if (name.endsWith('.wav') || name.endsWith('.mp3') || name.endsWith('.aif')) return 'icon-audio';
+      if (name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.avi')) return 'icon-footage';
+      if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.gif')) return 'icon-image';
+      return 'icon-image';
+    }
+
+    function renderAutoPlaceTree() {
+      var html = '';
+      
+      // Main comp (always outside)
+      html += `<div class="ae-row">
+        <div class="ae-cell name"><span class="ae-icon icon-comp"></span>00 - Main Composition Project</div>
+        <div class="ae-cell type"></div>
+        <div class="ae-cell size"></div>
+        <div class="ae-cell comment"></div>
+      </div>`;
+      
+      // Root items (files added when toggle was OFF)
+      if (autoPlaceRootItems.length > 0) {
+        autoPlaceRootItems.forEach(function(item) {
+          html += `<div class="ae-row drop-anim" style="background:rgba(232,112,111,0.05);">
+            <div class="ae-cell name"><span class="ae-icon ${item.icon}"></span>${item.name} <span style="color:#e8706f; font-size:9px; margin-left:4px;">(outside Assets)</span></div>
+            <div class="ae-cell type"></div>
+            <div class="ae-cell size"></div>
+            <div class="ae-cell comment"></div>
+          </div>`;
+        });
+      }
+      
+      // Assets folder header
+      html += `<div class="ae-row" style="background:#252525;">
+        <div class="ae-cell name"><span class="ae-icon icon-folder"></span><strong>Assets</strong></div>
+        <div class="ae-cell type"></div>
+        <div class="ae-cell size"></div>
+        <div class="ae-cell comment"></div>
+      </div>`;
+      
+      // Subfolders
+      var folderOrder = ['Comps', 'Solids', 'Audio', 'Images', 'Video'];
+      
+      folderOrder.forEach(function(folder) {
+        var items = autoPlaceFolders[folder];
+        
+        html += `<div class="ae-row" style="padding-left:14px; background: #222;">
+          <div class="ae-cell name">
+            <span class="ae-icon icon-folder"></span>
+            <strong>${folder}</strong>
+            <span style="color:#666; font-size:10px; margin-left:4px;">(${items.length})</span>
+          </div>
+          <div class="ae-cell type"></div>
+          <div class="ae-cell size"></div>
+          <div class="ae-cell comment"></div>
+        </div>`;
+        
+        if (items.length === 0) {
+          html += `<div class="ae-row" style="padding-left:42px;">
+            <div class="ae-cell name" style="color:#555; font-style:italic; font-size:10px;">(empty)</div>
+            <div class="ae-cell type"></div>
+            <div class="ae-cell size"></div>
+            <div class="ae-cell comment"></div>
+          </div>`;
+        } else {
+          items.forEach(function(item) {
+            html += `<div class="ae-row" style="padding-left:42px;">
+              <div class="ae-cell name"><span class="ae-icon ${item.icon}"></span>${item.name}</div>
+              <div class="ae-cell type"></div>
+              <div class="ae-cell size"></div>
+              <div class="ae-cell comment"></div>
+            </div>`;
+          });
+        }
+      });
+      
+      autoPlaceRows.innerHTML = html;
+      autoPlaceRows.scrollTop = 0;
+    }
+
+    renderAutoPlaceTree();
+
+    // ——— Inline Toggle (matches main panel toggle) ———
+    function setInlineToggleState(on) {
+      autoPlaceOn = on;
+      if (on) {
+        inlineToggle.classList.add('on');
+        inlineToggle.setAttribute('aria-checked', 'true');
+      } else {
+        inlineToggle.classList.remove('on');
+        inlineToggle.setAttribute('aria-checked', 'false');
+      }
+      toggle.classList.toggle('on', on);
+      toggle.setAttribute('aria-checked', on);
+    }
+
+    inlineToggle.addEventListener('click', function() {
+      setInlineToggleState(!autoPlaceOn);
+      
+      if (autoPlaceOn) {
+        setStatus('Auto-place is on', 'ok');
+        showFeedback(fbToggle, '✔ Auto-place is ON — files will be placed into their dedicated Assets folders.', 'ok');
+        showToast('Auto-place is ON', 'ok');
+      } else {
+        setStatus('Auto-place is off', '');
+        showFeedback(fbToggle, '⏸ Auto-place is OFF — new files will be placed outside Assets, unsorted.', 'warn');
+        showToast('Auto-place is OFF', 'warn');
+      }
+    });
+
+    inlineToggle.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); inlineToggle.click(); }
+    });
+
+    toggle.addEventListener('click', function () {
+      toggle.classList.toggle('on');
+      autoPlaceOn = toggle.classList.contains('on');
+      toggle.setAttribute('aria-checked', autoPlaceOn);
+      
+      inlineToggle.classList.toggle('on', autoPlaceOn);
+      inlineToggle.setAttribute('aria-checked', autoPlaceOn);
+      
+      setStatus(autoPlaceOn ? 'Auto-place is on' : 'Auto-place is off', '');
+      showFeedback(fbToggle, autoPlaceOn ? '✔ Auto-place is ON — files sorted into Assets.' : '⏸ Auto-place is OFF — files placed outside Assets.', autoPlaceOn ? 'ok' : 'warn');
+      showToast(autoPlaceOn ? 'Auto-place is on' : 'Auto-place is off', autoPlaceOn ? 'ok' : 'warn');
+    });
+    
+    toggle.addEventListener('keydown', function (e) {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle.click(); }
+    });
+
+    // ——— Run Organize button inside Auto-place card ———
+    runOrganizeAutoPlaceBtn.addEventListener('click', function() {
+      if (autoPlaceRootItems.length === 0) {
+        // Nothing to clean up
+        setStatus('Nothing to organize', '');
+        showFeedback(fbToggle, 'ℹ No files are outside Assets — nothing to organize.', 'ok');
+        showToast('No files outside Assets', 'ok');
+        return;
+      }
+      
+      setStatus('Organizing project…', 'warn');
+      showFeedback(fbToggle, '⏳ Moving ' + autoPlaceRootItems.length + ' item(s) into dedicated Assets folders…', 'warn');
+      showToast('Organizing ' + autoPlaceRootItems.length + ' item(s)…', 'warn');
+      
+      // Animate: move each root item into its correct folder
+      var itemsToMove = autoPlaceRootItems.slice();
+      autoPlaceRootItems = [];
+      
+      itemsToMove.forEach(function(item, index) {
+        setTimeout(function() {
+          var folder = getFolderForFile(item.name);
+          if (item.name === 'New Comp') folder = 'Comps';
+          if (item.name === 'Solid Layer') folder = 'Solids';
+          
+          if (autoPlaceFolders[folder]) {
+            autoPlaceFolders[folder].push(item);
+            renderAutoPlaceTree();
+          }
+        }, 200 * (index + 1));
+      });
+      
+      setTimeout(function() {
+        setStatus('Organized ' + itemsToMove.length + ' item(s)', 'ok');
+        showFeedback(fbToggle, '✔ Project organized — ' + itemsToMove.length + ' item(s) sorted into Assets folders.', 'ok');
+        showToast('Organized ' + itemsToMove.length + ' item(s)', 'ok');
+      }, 200 * itemsToMove.length + 400);
+    });
+
+    // Reset Demo
+    resetAutoPlaceBtn.addEventListener('click', function() {
+      autoPlaceFolders = {
+        Comps: [],
+        Solids: [],
+        Audio: [],
+        Images: [],
+        Video: []
+      };
+      autoPlaceRootItems = [];
+      renderAutoPlaceTree();
+      showFeedback(fbToggle, 'Demo reset. Toggle is ' + (autoPlaceOn ? 'ON' : 'OFF') + '.', '');
+      setStatus('Demo reset', '');
+      showToast('Auto-place demo reset', '');
+    });
+
+    // ——— File handling for auto-place ———
+    function handleAutoPlaceFile(type, name) {
+      var icon = getIconForFile(name, type);
+      
+      if (autoPlaceOn) {
+        // Toggle ON: place into dedicated folder inside Assets
+        var targetFolder = null;
+        if (type === 'comp') targetFolder = 'Comps';
+        else if (type === 'solid') targetFolder = 'Solids';
+        else targetFolder = getFolderForFile(name);
+        
+        if (targetFolder && autoPlaceFolders[targetFolder]) {
+          autoPlaceFolders[targetFolder].push({ name: name, icon: icon });
+          renderAutoPlaceTree();
+          
+          setStatus('Auto-placed: ' + name, 'ok');
+          showFeedback(fbToggle, '✔ Auto-placed "' + name + '" into Assets/' + targetFolder + '.', 'ok');
+          showToast(name + ' → Assets/' + targetFolder, 'ok');
+        }
+      } else {
+        // Toggle OFF: place outside Assets at project root
+        autoPlaceRootItems.push({ name: name, icon: icon });
+        renderAutoPlaceTree();
+        
+        setStatus('Placed outside Assets: ' + name, 'warn');
+        showFeedback(fbToggle, '⏸ Auto-place OFF — "' + name + '" was placed outside Assets. Use "Run Organize" to clean up.', 'warn');
+        showToast(name + ' placed outside Assets', 'warn');
+      }
+    }
+
+    // Draggable files
+    var draggableFiles = document.querySelectorAll('.draggable-file');
+    
+    draggableFiles.forEach(function(file) {
+      file.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+          type: file.dataset.type,
+          name: file.dataset.name
+        }));
+        file.classList.add('dragging');
+        setTimeout(function() { file.classList.remove('dragging'); }, 0);
+      });
+      
+      file.addEventListener('dragend', function(e) {
+        file.classList.remove('dragging');
+      });
+      
+      file.addEventListener('click', function() {
+        handleAutoPlaceFile(file.dataset.type, file.dataset.name);
+      });
+    });
+
+    // Drop zone: the auto-place tree container
+    autoPlaceTree.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      autoPlaceTree.style.borderColor = 'var(--accent)';
+      autoPlaceTree.style.boxShadow = 'inset 0 0 0 2px var(--accent), var(--inset)';
+    });
+    
+    autoPlaceTree.addEventListener('dragleave', function(e) {
+      autoPlaceTree.style.borderColor = '';
+      autoPlaceTree.style.boxShadow = 'var(--inset)';
+    });
+    
+    autoPlaceTree.addEventListener('drop', function(e) {
+      e.preventDefault();
+      autoPlaceTree.style.borderColor = '';
+      autoPlaceTree.style.boxShadow = 'var(--inset)';
+      
+      try {
+        var data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (!data || !data.name) return;
+        handleAutoPlaceFile(data.type, data.name);
+      } catch(err) {
+        console.warn('Drop parsing error', err);
+      }
+    });
+
+    // ——— 4. DEPENDENCIES SIMULATION ———
+    var depsData = [];
+    
+    function generateRandomDeps() {
+      var allAssets = [
+        { name: 'logo.png', type: 'Image', ext: 'image' },
+        { name: 'background.jpg', type: 'Image', ext: 'image' },
+        { name: 'design.psd', type: 'Image', ext: 'psd' },
+        { name: 'vector.ai', type: 'Image', ext: 'ai' },
+        { name: 'track.wav', type: 'Audio', ext: 'audio' },
+        { name: 'song.mp3', type: 'Audio', ext: 'audio' },
+        { name: 'sound.aif', type: 'Audio', ext: 'audio' },
+        { name: 'clip.mp4', type: 'Video', ext: 'video' },
+        { name: 'scene.mov', type: 'Video', ext: 'video' },
+        { name: 'footage.avi', type: 'Video', ext: 'video' },
+        { name: 'model.obj', type: '3D', ext: '3d' },
+        { name: 'asset.fbx', type: '3D', ext: '3d' }
+      ];
+      
+      var paths = [
+        'C:/Users/Desktop/Projects/',
+        'C:/Users/Downloads/',
+        'D:/Assets/',
+        'E:/Media/',
+        'C:/Projects/Another AE Project/Assets/',
+        'D:/Clients/LotusConseil/',
+        'C:/Users/Public/Documents/'
+      ];
+      
+      var statuses = ['Missing', 'Missing', 'Missing', 'Linked', 'Missing'];
+      
+      depsData = [];
+      
+      var numAssets = 6 + Math.floor(Math.random() * 4);
+      var shuffled = allAssets.sort(() => 0.5 - Math.random());
+      
+      for (var i = 0; i < numAssets; i++) {
+        var asset = shuffled[i];
+        var path = paths[Math.floor(Math.random() * paths.length)];
+        var status = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        depsData.push({
+          name: asset.name,
+          type: asset.type,
+          status: status,
+          path: path
+        });
+      }
+    }
+
+    function renderDepsTable() {
+      var html = '';
+      var missingCount = 0;
+      
+      depsData.forEach(function(dep, index) {
+        var statusClass = dep.status === 'Linked' ? 'status-ok' : 'status-missing';
+        var statusText = dep.status === 'Linked' ? 'Linked' : 'Missing';
+        if (dep.status === 'Missing') missingCount++;
+        
+        html += `<div class="deps-row" data-index="${index}">
+          <div class="deps-col-name">${dep.name}</div>
+          <div class="deps-col-type">${dep.type}</div>
+          <div class="deps-col-status"><span class="status-badge ${statusClass}">${statusText}</span></div>
+          <div class="deps-col-path">${dep.path}</div>
+        </div>`;
+      });
+      
+      if (depsData.length === 0) {
+        html = '<div class="deps-empty">No dependencies found. Click "Scan Dependencies".</div>';
+      }
+      
+      depsRows.innerHTML = html;
+      
+      var hasMissing = missingCount > 0;
+      depsFixBtn.disabled = !hasMissing;
+      depsCollectBtn.disabled = false;
+      
+      if (hasMissing) {
+        depsFixBtn.style.opacity = '1';
+        depsFixBtn.style.cursor = 'pointer';
+      } else {
+        depsFixBtn.style.opacity = '0.5';
+        depsFixBtn.style.cursor = 'not-allowed';
+      }
+    }
+
+    depsRows.innerHTML = '<div class="deps-empty">Click "Scan Dependencies" to load external files.</div>';
+
+    depsScanBtn.addEventListener('click', function () {
+      showFeedback(fbDeps, '⏳ Scanning project dependencies…', 'warn');
+      setStatus('Scanning dependencies…', 'warn');
+      depsSuccessBanner.classList.remove('show');
+      
+      depsRows.innerHTML = '<div class="deps-empty">Scanning…</div>';
+      
+      setTimeout(function () {
+        generateRandomDeps();
+        renderDepsTable();
+        var missingCount = depsData.filter(function(d) { return d.status === 'Missing'; }).length;
+        
+        showFeedback(fbDeps, '⚠ Scan complete. Found ' + depsData.length + ' items, ' + missingCount + ' missing.', 'warn');
+        setStatus('Dependencies scanned', 'warn');
+        showToast('Scan complete: ' + depsData.length + ' items', 'warn');
+      }, 800);
+    });
+
+    document.getElementById('depsScanBtn2').addEventListener('click', function() {
+      depsScanBtn.click();
+    });
+
+    depsFixBtn.addEventListener('click', function () {
+      if (depsFixBtn.disabled) return;
+      
+      showFeedback(fbDeps, '⏳ Resolving missing links…', 'warn');
+      setStatus('Fixing missing links…', 'warn');
+      
+      var missingItems = depsData.filter(function(d) { return d.status === 'Missing'; });
+      var fixedCount = 0;
+      
+      missingItems.forEach(function(item, i) {
+        setTimeout(function () {
+          item.status = 'Linked';
+          item.path = 'C:/Users/Desktop/Projects/Resolved/';
+          renderDepsTable();
+          fixedCount++;
+          
+          if (fixedCount === missingItems.length) {
+            showFeedback(fbDeps, '✔ All missing links resolved. Ready to Collect Files.', 'ok');
+            setStatus('Missing links fixed', 'ok');
+            showToast('All missing links resolved', 'ok');
+          }
+        }, 600 * (i + 1));
+      });
+    });
+
+    depsCollectBtn.addEventListener('click', function () {
+      showFeedback(fbDeps, '⏳ Collecting all files into one folder…', 'warn');
+      setStatus('Collecting files…', 'warn');
+      
+      depsData.forEach(function(item, i) {
+        setTimeout(function () {
+          item.path = 'C:/Users/Desktop/Collected_Project/Assets/';
+          renderDepsTable();
+        }, 300 * (i + 1));
+      });
+      
+      setTimeout(function () {
+        depsData.forEach(function(item) {
+          item.status = 'Linked';
+          item.path = 'C:/Users/Desktop/Collected_Project/Assets/';
+        });
+        renderDepsTable();
+        depsSuccessBanner.classList.add('show');
+        
+        showFeedback(fbDeps, '✔ Project collected successfully! All assets are in one folder. Ready for Lotus Conseil.', 'ok');
+        setStatus('Project collected successfully', 'ok');
+        showToast('Project collected — ready to organize', 'ok');
+      }, 1500);
+    });
+
+    // ——— 5. SMART FILE RECOGNITION ———
+    document.querySelector('[data-demo="smart"]').addEventListener('click', function () {
+      showFeedback(fbSmart, '📄 Detecting format…', '');
+      showToast('Detecting file format…', '');
+      
+      var allFiles = ['logo.ai', 'photo.png', 'clip.mov', 'model.obj', 'track.mp3', 'untitled.xyz', 'design.psd', 'shape.eps', 'scene.avi', 'sound.wav'];
+      var target = allFiles[Math.floor(Math.random() * allFiles.length)];
+      
+      var folder = getFolderForFile(target);
+      
+      setTimeout(function () {
+        showFeedback(fbSmart, '✔ ' + target + ' → ' + folder + ' (auto-detected)', 'ok');
+        showToast(target + ' → ' + folder, 'ok');
+      }, 800);
+    });
+
+    // ——— demo buttons for other tests ———
+    document.querySelectorAll('[data-demo]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        if (btn.id === 'demoOrganizeBtn') return;
+        if (btn.dataset.demo === 'deps') return;
+        
+        var action = btn.dataset.demo;
+        if (action === 'remove') {
+          removeBtn.click();
+        } else if (action === 'toggle') {
+          toggle.click();
+        }
+      });
+    });
+
+    // ——— keyboard shortcut: Esc closes about ———
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !aboutBox.classList.contains('hidden')) {
+        aboutBox.classList.add('hidden');
+      }
+    });
+
+    // ——— initialize feedback colors ———
+    [fbOrganize, fbRemove, fbToggle, fbSmart, fbDeps].forEach(function (el) {
+      if(el) el.classList.add('active');
+    });
+
+  </script>
+</body>
+</html>
